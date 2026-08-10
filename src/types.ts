@@ -49,6 +49,8 @@ export type ProgressEvent =
   | {
       phase: "result";
       markdown: string;
+      /** markdown をサーバー側でHTMLに変換したもの（エスケープ済み） */
+      html: string;
       stats: ResultStats;
     }
   | { phase: "error"; message: string };
@@ -72,6 +74,8 @@ export type JobSnapshot = {
   params?: DigestParams;
   progress: string[];
   markdown?: string;
+  /** markdown をサーバー側でHTMLに変換したもの（エスケープ済み） */
+  html?: string;
   stats?: ResultStats;
   error?: string;
 };

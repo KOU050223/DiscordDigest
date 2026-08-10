@@ -38,9 +38,14 @@ export const CLIENT_SCRIPT = String.raw`
     submitBtn.textContent = busy ? "処理中…" : "要約する";
   }
 
-  function showResult(markdown, stats) {
+  var currentMarkdown = "";
+
+  function showResult(markdown, stats, htmlBody) {
     resultSection.hidden = false;
-    resultBody.textContent = markdown;
+    currentMarkdown = markdown || "";
+    // HTML はサーバー側でエスケープ済み。無ければ生テキストで表示する
+    if (htmlBody) resultBody.innerHTML = htmlBody;
+    else resultBody.textContent = markdown;
     if (stats) {
       var parts = [
         stats.messageCount + "件",
@@ -85,7 +90,7 @@ export const CLIENT_SCRIPT = String.raw`
 
       if (ev.phase === "snapshot") {
         if (ev.progress && ev.progress.length) setLog(ev.progress);
-        if (ev.status === "done" && ev.markdown) showResult(ev.markdown, ev.stats);
+        if (ev.status === "done" && ev.markdown) showResult(ev.markdown, ev.stats, ev.html);
         else if (ev.status === "error") showError(ev.error || "不明なエラー");
         else if (ev.status === "running") setBusy(true);
         return;
@@ -101,7 +106,7 @@ export const CLIENT_SCRIPT = String.raw`
         if (ev.done > 0) replaceLastLog(sline);
         else addLog(sline);
       }
-      if (ev.phase === "result") showResult(ev.markdown, ev.stats);
+      if (ev.phase === "result") showResult(ev.markdown, ev.stats, ev.html);
       if (ev.phase === "error") showError(ev.message);
     };
 
@@ -166,7 +171,8 @@ export const CLIENT_SCRIPT = String.raw`
   });
 
   copyBtn.addEventListener("click", function () {
-    navigator.clipboard.writeText(resultBody.textContent || "").then(function () {
+    // 表示はHTMLだが、コピーは元のMarkdownを渡す
+    navigator.clipboard.writeText(currentMarkdown).then(function () {
       copyBtn.textContent = "コピーしました";
       setTimeout(function () {
         copyBtn.textContent = "コピー";

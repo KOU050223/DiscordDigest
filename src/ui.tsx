@@ -11,7 +11,15 @@ const EXTRA_CSS = `
     font-size: .8rem; white-space: pre-wrap; word-break: break-all;
     max-height: 14rem; overflow-y: auto; margin: 0;
   }
-  #result-body { white-space: pre-wrap; word-break: break-word; font-size: .9rem; }
+  #result-body { word-break: break-word; font-size: .95rem; }
+  #result-body h2 { font-size: 1.15rem; margin-block: 1.4rem .5rem; }
+  #result-body h2:first-child { margin-block-start: 0; }
+  #result-body h3 { font-size: 1rem; margin-block: 1rem .4rem; }
+  #result-body ul, #result-body ol { margin-block: .4rem .8rem; padding-inline-start: 1.4rem; }
+  #result-body li { margin-block: .2rem; }
+  #result-body p { margin-block: .5rem; }
+  #result-body pre { padding: .6rem; font-size: .8rem; overflow-x: auto; }
+  #result-body blockquote { margin-block: .5rem; }
   #result-meta { font-size: .8rem; color: var(--pico-muted-color); }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }

@@ -1,6 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { fetchMessages } from "./discord";
 import { toUserMessage } from "./errors";
+import { renderMarkdown } from "./markdown";
 import { PRIMARY_MODEL, summarize } from "./summarize";
 import type {
   DigestParams,
@@ -69,6 +70,7 @@ export class DigestJob extends DurableObject<Env> {
       params: paramsRaw ? JSON.parse(paramsRaw) : undefined,
       progress: JSON.parse(this.get("progress") ?? "[]"),
       markdown: this.get("markdown"),
+      html: this.get("html"),
       stats: statsRaw ? JSON.parse(statsRaw) : undefined,
       error,
     };
@@ -146,10 +148,12 @@ export class DigestJob extends DurableObject<Env> {
         outputTokens: usage.outputTokens,
       };
 
+      const rendered = renderMarkdown(markdown);
       this.put("markdown", markdown);
+      this.put("html", rendered);
       this.put("stats", JSON.stringify(stats));
       this.put("status", "done");
-      this.emit({ phase: "result", markdown, stats });
+      this.emit({ phase: "result", markdown, html: rendered, stats });
     } catch (err) {
       const message = toUserMessage(err);
       this.put("status", "error");
@@ -171,10 +175,12 @@ export class DigestJob extends DurableObject<Env> {
       chunkCount: 0,
       model: PRIMARY_MODEL,
     };
+    const rendered = renderMarkdown(markdown);
     this.put("markdown", markdown);
+    this.put("html", rendered);
     this.put("stats", JSON.stringify(stats));
     this.put("status", "done");
-    this.emit({ phase: "result", markdown, stats });
+    this.emit({ phase: "result", markdown, html: rendered, stats });
   }
 
   /** 進捗を保存しつつ、接続中の全クライアントへ配信する */
