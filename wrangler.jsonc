@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "discord-digest",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-08-05",
+
+  "ai": { "binding": "AI" },
+
+  "durable_objects": {
+    "bindings": [{ "name": "DIGEST_JOB", "class_name": "DigestJob" }]
+  },
+
+  // Workers Free プランは SQLite バックエンドのみサポート。
+  // new_classes（KVバックエンド）は新規アカウントでは拒否されるので使わないこと。
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DigestJob"] }],
+
+  "observability": { "enabled": true, "logs": { "head_sampling_rate": 1 } }
+
+  // Paid プランへ移行したら有効化する（Free では設定できない）:
+  // "limits": { "cpu_ms": 300000 }
+}

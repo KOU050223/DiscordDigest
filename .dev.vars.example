@@ -1,0 +1,3 @@
+# Discord Bot トークン（"Bot " プレフィックスは付けない。裸の値を入れること）
+# 本番へは: npx wrangler secret put DISCORD_BOT_TOKEN
+DISCORD_BOT_TOKEN=your-bot-token-here
