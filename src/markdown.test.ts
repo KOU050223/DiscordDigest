@@ -135,6 +135,39 @@ describe("renderMarkdown - インライン装飾", () => {
   });
 });
 
+describe("renderMarkdown - 改行が潰れた出力への耐性", () => {
+  // モデルがまれに改行を落として1行で返すことがある。
+  // そのままだと全体が1つの見出しに潰れて読めなくなる。
+  const flat =
+    "## 概要 音楽の共有。 ## 主な話題 ### 音楽 - SiMのツアー。 - バンドリの話題。 ## 決まったこと - 特になし";
+
+  it("見出しを分割して認識する", () => {
+    const out = renderMarkdown(flat);
+    expect(out.match(/<h2>/g)).toHaveLength(3);
+    expect(out.match(/<h3>/g)).toHaveLength(1);
+  });
+
+  it("箇条書きを分割して認識する", () => {
+    const out = renderMarkdown(flat);
+    expect(out.match(/<li>/g)).toHaveLength(3);
+  });
+
+  it("正常な改行ありの入力を壊さない", () => {
+    const normal = "## 概要\n音楽の雑談。\n\n## 主な話題\n* SiM\n* ヤバT";
+    const out = renderMarkdown(normal);
+    expect(out.match(/<h2>/g)).toHaveLength(2);
+    expect(out.match(/<li>/g)).toHaveLength(2);
+    expect(out).toContain("<p>音楽の雑談。</p>");
+  });
+
+  it("本文中のハイフンを箇条書きと誤認しない", () => {
+    const out = renderMarkdown("## 概要\n2024-03-14 のログ。範囲は10-20件。");
+    expect(out).not.toContain("<li>");
+    expect(out).toContain("2024-03-14");
+    expect(out).toContain("10-20件");
+  });
+});
+
 describe("renderMarkdown - 実際の要約出力", () => {
   it("典型的な要約を破綻なく変換する", () => {
     const md = [

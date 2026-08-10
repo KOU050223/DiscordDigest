@@ -35,11 +35,32 @@ function renderInline(escaped: string): string {
 type ListState = { type: "ul" | "ol"; open: boolean };
 
 /**
+ * 改行を正規化する。
+ *
+ * モデルは通常 `## 見出し\n本文` の形で返すが、まれに改行を落として
+ * 1行に詰めてくることがある。そのままだと行単位の解析が効かず、
+ * 全体が1つの見出しに潰れてしまうため、行頭に来るはずの記号
+ * （見出し・箇条書き）の直前に改行を補う。
+ */
+function normalizeLineBreaks(md: string): string {
+  let s = md.replace(/\r\n/g, "\n");
+
+  // 行頭以外に現れた見出し記号の前で改行する
+  s = s.replace(/([^\n])\s+(#{1,4}\s)/g, "$1\n\n$2");
+  // 見出しの直後に本文が続く場合も改行する（"## 概要 本文" → "## 概要\n本文"）
+  s = s.replace(/^(#{1,4}\s+[^\n]*?)\s+-\s+/gm, "$1\n- ");
+  // 行頭以外の箇条書き記号の前で改行する（全角ハイフンや中黒は対象外）
+  s = s.replace(/([^\n])\s+-\s(?=\S)/g, "$1\n- ");
+
+  return s;
+}
+
+/**
  * Markdown を HTML 文字列へ変換する。
  * 戻り値は innerHTML に代入して使う。
  */
 export function renderMarkdown(md: string): string {
-  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  const lines = normalizeLineBreaks(md).split("\n");
   const out: string[] = [];
   const list: ListState = { type: "ul", open: false };
   let inCodeBlock = false;

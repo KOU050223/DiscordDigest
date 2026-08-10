@@ -65,12 +65,17 @@ export class DigestJob extends DurableObject<Env> {
         "期間を短くして再実行してください。";
     }
 
+    // html を保存していない頃のジョブも整形して表示できるよう、
+    // 無ければ読み出し時に変換する
+    const markdown = this.get("markdown");
+    const html = this.get("html") ?? (markdown ? renderMarkdown(markdown) : undefined);
+
     return {
       status,
       params: paramsRaw ? JSON.parse(paramsRaw) : undefined,
       progress: JSON.parse(this.get("progress") ?? "[]"),
-      markdown: this.get("markdown"),
-      html: this.get("html"),
+      markdown,
+      html,
       stats: statsRaw ? JSON.parse(statsRaw) : undefined,
       error,
     };
