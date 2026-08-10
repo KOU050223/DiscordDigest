@@ -137,6 +137,11 @@ export const CLIENT_SCRIPT = String.raw`
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (res.status === 401) {
+        // セッション切れ。ログインし直せば同じ操作を続けられる
+        location.href = "/auth/login";
+        return;
+      }
       var body = await res.json();
       if (!res.ok) {
         showError(body.error || "ジョブを開始できませんでした");

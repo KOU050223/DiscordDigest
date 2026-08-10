@@ -3,7 +3,15 @@ import type { DigestJob } from "./digest-job";
 export type Env = {
   AI: Ai;
   DIGEST_JOB: DurableObjectNamespace<DigestJob>;
+  /** メッセージ取得に使う Bot トークン（"Bot " は付けずに保存する） */
   DISCORD_BOT_TOKEN: string;
+  /** OAuth ログイン用 */
+  DISCORD_CLIENT_ID: string;
+  DISCORD_CLIENT_SECRET: string;
+  /** セッション署名鍵（32バイト以上のランダム値） */
+  SESSION_SECRET: string;
+  /** このサーバーのメンバーだけがログインできる */
+  ALLOWED_GUILD_ID: string;
 };
 
 /** フォームから受け取るジョブのパラメータ */

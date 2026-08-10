@@ -21,6 +21,8 @@ const EXTRA_CSS = `
   #result-body pre { padding: .6rem; font-size: .8rem; overflow-x: auto; }
   #result-body blockquote { margin-block: .5rem; }
   #result-meta { font-size: .8rem; color: var(--pico-muted-color); }
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+  .topbar hgroup { margin-block-end: .5rem; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
 `;
@@ -102,7 +104,53 @@ const ResultSection = () => (
   </section>
 );
 
-export const Page = () => (
+/** 未ログイン時に出す画面 */
+export const LoginPage = (props: { error?: string }) => (
+  <html lang="ja">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <title>DiscordDigest - ログイン</title>
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+      />
+      {html`<style>
+        ${raw(EXTRA_CSS)}
+      </style>`}
+    </head>
+    <body>
+      <main class="container">
+        <hgroup>
+          <h1>DiscordDigest</h1>
+          <p>Discord のチャンネルを期間指定で日本語要約します。</p>
+        </hgroup>
+
+        {props.error ? (
+          <article style="border-left:4px solid var(--pico-del-color)">
+            <strong>ログインできませんでした</strong>
+            <p>{props.error}</p>
+          </article>
+        ) : null}
+
+        <p>利用するには Discord でログインしてください。</p>
+        <p>
+          <a href="/auth/login" role="button">
+            Discord でログイン
+          </a>
+        </p>
+        <p>
+          <small>
+            対象サーバーのメンバーであることを確認します。
+            サーバーの一覧を読む権限のみ要求し、メッセージの読み取りやアカウント操作は行いません。
+          </small>
+        </p>
+      </main>
+    </body>
+  </html>
+);
+
+export const Page = (props: { userName: string }) => (
   <html lang="ja">
     <head>
       <meta charset="utf-8" />
@@ -118,10 +166,15 @@ export const Page = () => (
     </head>
     <body>
       <main class="container">
-        <hgroup>
-          <h1>DiscordDigest</h1>
-          <p>Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。</p>
-        </hgroup>
+        <div class="topbar">
+          <hgroup>
+            <h1>DiscordDigest</h1>
+            <p>Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。</p>
+          </hgroup>
+          <small>
+            {props.userName} ／ <a href="/auth/logout">ログアウト</a>
+          </small>
+        </div>
 
         <Form />
         <ProgressSection />

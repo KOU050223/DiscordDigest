@@ -1,3 +1,15 @@
 # Discord Bot トークン（"Bot " プレフィックスは付けない。裸の値を入れること）
-# 本番へは: npx wrangler secret put DISCORD_BOT_TOKEN
+# Developer Portal → Bot → Reset Token
 DISCORD_BOT_TOKEN=your-bot-token-here
+
+# OAuth ログイン用（Developer Portal → OAuth2 → Client information）
+DISCORD_CLIENT_ID=your-application-id
+DISCORD_CLIENT_SECRET=your-client-secret
+
+# セッション署名鍵。次のコマンドで生成する:
+#   openssl rand -base64 32
+SESSION_SECRET=replace-with-random-32-bytes
+
+# このサーバーのメンバーだけがログインできる
+# （サーバーを右クリック → IDをコピー。開発者モードの有効化が必要）
+ALLOWED_GUILD_ID=1215894283899633664
