@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { verifySession } from "./auth";
+import { assertSecretStrength, verifySession } from "./auth";
 import type { Env } from "./types";
 
 const env = { SESSION_SECRET: "test-secret-value-32-bytes-long!!" } as Env;
@@ -34,6 +34,24 @@ async function makeToken(
 
 const future = () => Math.floor(Date.now() / 1000) + 3600;
 const past = () => Math.floor(Date.now() / 1000) - 3600;
+
+describe("assertSecretStrength", () => {
+  // openssl rand -base64 の出力は '=' を含み、.dev.vars で切れることがある。
+  // 短い鍵のまま動くと総当たりでセッションを偽造されるため起動時に弾く。
+  it("32文字以上の鍵を通す", () => {
+    expect(() => assertSecretStrength(env)).not.toThrow();
+  });
+
+  it("短い鍵を弾く", () => {
+    expect(() => assertSecretStrength({ SESSION_SECRET: "MQ7i" } as Env)).toThrow(
+      /短すぎます/,
+    );
+  });
+
+  it("未設定を弾く", () => {
+    expect(() => assertSecretStrength({} as Env)).toThrow(/短すぎます/);
+  });
+});
 
 describe("verifySession", () => {
   it("正しく署名されたセッションを受け入れる", async () => {

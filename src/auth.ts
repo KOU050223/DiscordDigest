@@ -61,6 +61,20 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+/** 鍵として短すぎる値を弾く（設定ミスで総当たり可能になるのを防ぐ） */
+const MIN_SECRET_LENGTH = 32;
+
+export function assertSecretStrength(env: Env): void {
+  if (!env.SESSION_SECRET || env.SESSION_SECRET.length < MIN_SECRET_LENGTH) {
+    throw new Error(
+      `SESSION_SECRET が短すぎます（${env.SESSION_SECRET?.length ?? 0}文字）。` +
+        `${MIN_SECRET_LENGTH}文字以上を設定してください。` +
+        `openssl rand -hex 32 で生成できます` +
+        `（base64 だと '=' 以降が切れることがあります）。`,
+    );
+  }
+}
+
 async function signSession(env: Env, session: Session): Promise<string> {
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SEC;
   const payload = base64UrlEncode(
@@ -130,6 +144,8 @@ function redirectUri(request: Request): string {
 
 /** ログイン開始。Discord の認可画面へ飛ばす */
 export function startLogin(request: Request, env: Env): Response {
+  assertSecretStrength(env);
+
   const state = crypto.randomUUID();
   const url = new URL("https://discord.com/oauth2/authorize");
   url.searchParams.set("client_id", env.DISCORD_CLIENT_ID);
