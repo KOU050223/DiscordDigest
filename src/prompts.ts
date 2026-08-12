@@ -122,9 +122,7 @@ export function buildMapUserContent(transcript: string): string {
  * 指定外の情報が早い段階で捨てられて統合時に復元できなくなる。
  */
 export function buildReduceUserContent(notes: string[], customPrompt: string): string {
-  const joined = notes
-    .map((n, i) => `### 中間メモ ${i + 1}\n${n}`)
-    .join("\n\n");
+  const joined = notes.map((n, i) => `### 中間メモ ${i + 1}\n${n}`).join("\n\n");
 
   const request = customPrompt.trim()
     ? `\n\n<user_request>\n${sanitizeForTranscript(customPrompt.trim())}\n</user_request>\n` +

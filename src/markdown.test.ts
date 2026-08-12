@@ -33,7 +33,7 @@ describe("renderMarkdown - XSS対策", () => {
   });
 
   it("引用符と&もエスケープする", () => {
-    const out = renderMarkdown('a & b "c" \'d\'');
+    const out = renderMarkdown("a & b \"c\" 'd'");
     expect(out).toContain("&amp;");
     expect(out).toContain("&quot;");
   });
@@ -43,8 +43,21 @@ describe("renderMarkdown - 生成タグの許可リスト", () => {
   // 出力は innerHTML に入るため、意図した以外のタグや
   // イベントハンドラが一切生成されないことを保証する。
   const ALLOWED = new Set([
-    "p", "h1", "h2", "h3", "h4", "ul", "ol", "li",
-    "strong", "em", "code", "pre", "hr", "blockquote", "br",
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "ul",
+    "ol",
+    "li",
+    "strong",
+    "em",
+    "code",
+    "pre",
+    "hr",
+    "blockquote",
+    "br",
   ]);
 
   const attacks = [

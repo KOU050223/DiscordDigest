@@ -169,7 +169,10 @@ export type CallbackResult =
   | { ok: false; message: string };
 
 /** 認可コードを受け取り、所属を検証してセッションを発行する */
-export async function handleCallback(request: Request, env: Env): Promise<CallbackResult> {
+export async function handleCallback(
+  request: Request,
+  env: Env,
+): Promise<CallbackResult> {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
@@ -180,7 +183,10 @@ export async function handleCallback(request: Request, env: Env): Promise<Callba
   }
   if (!code) return { ok: false, message: "認可コードがありません。" };
   if (!state || !savedState || !timingSafeEqual(state, savedState)) {
-    return { ok: false, message: "ログインの検証に失敗しました。もう一度お試しください。" };
+    return {
+      ok: false,
+      message: "ログインの検証に失敗しました。もう一度お試しください。",
+    };
   }
 
   // トークン交換。Basic 認証 + form-urlencoded が必須（JSON は受け付けられない）

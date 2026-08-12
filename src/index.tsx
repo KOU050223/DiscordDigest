@@ -3,9 +3,9 @@ import {
   clearSessionCookie,
   getSessionToken,
   handleCallback,
+  type Session,
   startLogin,
   verifySession,
-  type Session,
 } from "./auth";
 import { parseChannelRef, parseDateRange } from "./channel-url";
 import { toUserMessage, UserFacingError } from "./errors";
@@ -61,7 +61,7 @@ app.get("/auth/callback", async (c) => {
   return new Response(null, { status: 302, headers: result.headers });
 });
 
-app.get("/auth/logout", (c) => {
+app.get("/auth/logout", () => {
   return new Response(null, {
     status: 302,
     headers: { Location: "/auth/login", "Set-Cookie": clearSessionCookie() },

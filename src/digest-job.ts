@@ -3,13 +3,7 @@ import { fetchMessages } from "./discord";
 import { toUserMessage } from "./errors";
 import { renderMarkdown } from "./markdown";
 import { PRIMARY_MODEL, summarize } from "./summarize";
-import type {
-  DigestParams,
-  Env,
-  JobSnapshot,
-  ProgressEvent,
-  ResultStats,
-} from "./types";
+import type { DigestParams, Env, JobSnapshot, ProgressEvent, ResultStats } from "./types";
 
 /** これを超えて進捗が無いジョブは中断されたとみなす */
 const STALL_TIMEOUT_MS = 15 * 60 * 1000;
@@ -145,7 +139,11 @@ export class DigestJob extends DurableObject<Env> {
 
   private async run(params: DigestParams): Promise<void> {
     try {
-      this.emit({ phase: "status", status: "running", message: "メッセージを取得しています…" });
+      this.emit({
+        phase: "status",
+        status: "running",
+        message: "メッセージを取得しています…",
+      });
 
       const fetched = await fetchMessages(
         this.env,
@@ -269,7 +267,9 @@ export class DigestJob extends DurableObject<Env> {
   // --- SQLite への薄いアクセサ ---
 
   private get(key: string): string | undefined {
-    const rows = this.sql.exec("SELECT value FROM job_state WHERE key = ?", key).toArray();
+    const rows = this.sql
+      .exec("SELECT value FROM job_state WHERE key = ?", key)
+      .toArray();
     return rows.length > 0 ? (rows[0].value as string) : undefined;
   }
 

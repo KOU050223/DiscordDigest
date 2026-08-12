@@ -35,7 +35,10 @@ function goToTip(index: number, smooth: boolean): void {
 function syncDots(): void {
   const active = currentTip();
   for (let i = 0; i < els.tipsDots.children.length; i++) {
-    els.tipsDots.children[i].setAttribute("aria-selected", i === active ? "true" : "false");
+    els.tipsDots.children[i].setAttribute(
+      "aria-selected",
+      i === active ? "true" : "false",
+    );
   }
   els.tipsCount.textContent = `${active + 1} / ${tipCount}`;
 }

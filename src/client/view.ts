@@ -77,7 +77,11 @@ function formatStats(stats: ResultStats): string {
  * 流し込める。ここに別経路の HTML を渡すと XSS になるので、
  * クライアント側で Markdown をレンダリングし直す設計にはしない。
  */
-export function showResult(markdown: string, stats?: ResultStats, htmlBody?: string): void {
+export function showResult(
+  markdown: string,
+  stats?: ResultStats,
+  htmlBody?: string,
+): void {
   els.resultSection.hidden = false;
   currentMarkdown = markdown || "";
 

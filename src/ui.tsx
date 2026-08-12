@@ -109,12 +109,7 @@ const ProgressSection = () => (
     <article>
       <header class="progress-header">
         進捗
-        <button
-          type="button"
-          id="tips-open"
-          class="secondary outline"
-          hidden
-        >
+        <button type="button" id="tips-open" class="secondary outline" hidden>
           小話を見る
         </button>
       </header>
@@ -143,7 +138,8 @@ const ResultSection = () => (
   </section>
 );
 
-const DESCRIPTION = "Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。";
+const DESCRIPTION =
+  "Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。";
 
 /**
  * 共通の <head>。OGP は SNS のクローラー向けなので、
@@ -201,6 +197,11 @@ export const LoginPage = (props: { origin: string; error?: string }) => (
 
         <p>利用するには Discord でログインしてください。</p>
         <p>
+          {/*
+            Pico は role="button" でリンクをボタンの見た目にする。
+            押すと /auth/login へ遷移するので <button> ではなく <a> のままにする
+          */}
+          {/* biome-ignore lint/a11y/useSemanticElements: 遷移するリンクなので <a> が正しい */}
           <a href="/auth/login" role="button">
             Discord でログイン
           </a>

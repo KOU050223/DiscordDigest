@@ -3,7 +3,8 @@ import { buildShareText, extractOverview } from "./share-text";
 
 describe("extractOverview", () => {
   it("## 概要 の中身を取り出す", () => {
-    const md = "# タイトル\n\n## 概要\n\n今日は認証の設計を決めた。\n\n## 決定事項\n\n- 採用する";
+    const md =
+      "# タイトル\n\n## 概要\n\n今日は認証の設計を決めた。\n\n## 決定事項\n\n- 採用する";
     expect(extractOverview(md)).toBe("今日は認証の設計を決めた。");
   });
 

@@ -51,7 +51,8 @@ async function discordGet<T>(env: Env, url: URL, attempt = 0): Promise<T> {
     }
     const body = (await res.json().catch(() => ({}))) as { retry_after?: number };
     const headerRetry = Number(res.headers.get("retry-after"));
-    const retryAfterSec = body.retry_after ?? (Number.isFinite(headerRetry) ? headerRetry : 1);
+    const retryAfterSec =
+      body.retry_after ?? (Number.isFinite(headerRetry) ? headerRetry : 1);
     const waitMs = Math.ceil(retryAfterSec * 1000) + 100;
     await new Promise((r) => setTimeout(r, waitMs));
     return discordGet<T>(env, url, attempt + 1);
@@ -77,7 +78,10 @@ async function discordGet<T>(env: Env, url: URL, attempt = 0): Promise<T> {
 }
 
 /** チャンネル名を取得する（表示用。失敗しても致命的ではない） */
-export async function fetchChannelName(env: Env, channelId: string): Promise<string | undefined> {
+export async function fetchChannelName(
+  env: Env,
+  channelId: string,
+): Promise<string | undefined> {
   try {
     const data = await discordGet<{ name?: string }>(
       env,

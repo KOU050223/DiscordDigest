@@ -10,9 +10,11 @@ import { BadInputError } from "./errors";
 
 describe("parseChannelRef", () => {
   it("チャンネルURLから channel id を取り出す", () => {
-    expect(parseChannelRef("https://discord.com/channels/111111111111111111/222222222222222222")).toBe(
-      "222222222222222222",
-    );
+    expect(
+      parseChannelRef(
+        "https://discord.com/channels/111111111111111111/222222222222222222",
+      ),
+    ).toBe("222222222222222222");
   });
 
   it("メッセージIDまで含むURLでも channel id を取る", () => {
@@ -25,7 +27,9 @@ describe("parseChannelRef", () => {
 
   it("discordapp.com にも対応する", () => {
     expect(
-      parseChannelRef("https://discordapp.com/channels/111111111111111111/222222222222222222"),
+      parseChannelRef(
+        "https://discordapp.com/channels/111111111111111111/222222222222222222",
+      ),
     ).toBe("222222222222222222");
   });
 

@@ -1,12 +1,12 @@
 import { AiError } from "./errors";
 import {
-  MAP_SYSTEM_PROMPT,
-  REDUCE_SYSTEM_PROMPT,
-  SINGLE_SYSTEM_PROMPT,
   buildMapUserContent,
   buildReduceUserContent,
   buildSingleUserContent,
   formatTranscript,
+  MAP_SYSTEM_PROMPT,
+  REDUCE_SYSTEM_PROMPT,
+  SINGLE_SYSTEM_PROMPT,
 } from "./prompts";
 import type { Env, NormalizedMessage } from "./types";
 
@@ -85,7 +85,8 @@ export function chunkMessages(
     // 目標を超えている、かつ会話の切れ目なら、ここで区切るのが最も自然
     const shouldSplit =
       current.length > 0 &&
-      (currentTokens + tokens > targetTokens || (isGap && currentTokens > targetTokens * 0.6));
+      (currentTokens + tokens > targetTokens ||
+        (isGap && currentTokens > targetTokens * 0.6));
 
     if (shouldSplit) {
       chunks.push(current);
@@ -157,7 +158,9 @@ async function runModel(
       } catch (fallbackErr) {
         const detail =
           fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr);
-        throw new AiError(`AIモデルが混み合っています（フォールバックも失敗: ${detail}）`);
+        throw new AiError(
+          `AIモデルが混み合っています（フォールバックも失敗: ${detail}）`,
+        );
       }
     }
 
@@ -213,15 +216,18 @@ async function mapWithConcurrency<T, R>(
   let next = 0;
   let done = 0;
 
-  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
-    while (true) {
-      const i = next++;
-      if (i >= items.length) break;
-      results[i] = await fn(items[i], i);
-      done++;
-      onDone(done);
-    }
-  });
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (true) {
+        const i = next++;
+        if (i >= items.length) break;
+        results[i] = await fn(items[i], i);
+        done++;
+        onDone(done);
+      }
+    },
+  );
 
   await Promise.all(workers);
   return results;
