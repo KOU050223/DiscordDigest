@@ -1,5 +1,6 @@
 import { html, raw } from "hono/html";
 import { CLIENT_SCRIPT } from "./client-script";
+import { TIPS } from "./data";
 
 const EXTRA_CSS = `
   :root { --pico-form-element-spacing-vertical: 0.6rem; }
@@ -26,6 +27,48 @@ const EXTRA_CSS = `
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
 
+  .progress-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .progress-header button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .75rem; }
+
+  /* --- 小話モーダル --- */
+  #tips-dialog article { max-width: 34rem; padding-block-end: 1rem; }
+  .tips-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .tips-header button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .75rem; }
+
+  /* 横スクロール + スナップ。スワイプ操作は JS を書かずブラウザに任せる */
+  #tips-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    margin-inline: calc(var(--pico-block-spacing-horizontal) * -1);
+  }
+  #tips-track::-webkit-scrollbar { display: none; }
+  .tip {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    padding-inline: var(--pico-block-spacing-horizontal);
+    min-height: 13rem;
+  }
+  .tip-emoji { font-size: 2.4rem; line-height: 1; margin-block-end: .6rem; }
+  .tip h3 { font-size: 1.05rem; margin-block: 0 .5rem; }
+  .tip p { font-size: .9rem; margin: 0; color: var(--pico-muted-color); }
+
+  .tips-nav { display: flex; align-items: center; gap: 1rem; padding-block: .6rem; }
+  .tips-nav button { width: auto; margin: 0; padding: .1rem .8rem; font-size: 1rem; }
+  #tips-dots { display: flex; gap: .4rem; flex: 1; justify-content: center; flex-wrap: wrap; }
+  #tips-dots span {
+    width: .5rem; height: .5rem; border-radius: 50%;
+    background: var(--pico-muted-border-color); transition: background .2s;
+  }
+  #tips-dots span[aria-selected="true"] { background: var(--pico-primary); }
+  #tips-count { color: var(--pico-muted-color); font-size: .75rem; min-width: 3.2rem; text-align: right; }
+  /* 枚数が多いと点が潰れるので、狭い画面では数字表示だけにする */
+  @media (max-width: 480px) { #tips-dots { display: none; } #tips-count { flex: 1; text-align: center; } }
+  .tips-note { text-align: center; margin: 0; color: var(--pico-muted-color); }
+
+  /* 端末が「動きを減らす」設定なら自動送りのスムーススクロールも止める */
+  @media (prefers-reduced-motion: reduce) { #tips-track { scroll-behavior: auto; } }
 `;
 
 const Form = () => (
@@ -76,10 +119,76 @@ const Form = () => (
   </form>
 );
 
+/** 待ち時間に出す小話モーダル。左右スワイプ / ボタンで移動する */
+const TipsDialog = () => (
+  <dialog id="tips-dialog">
+    <article>
+      <header class="tips-header">
+        <strong>解析中の小話</strong>
+        <button
+          type="button"
+          id="tips-close"
+          class="secondary outline"
+          aria-label="小話を閉じる"
+        >
+          閉じる
+        </button>
+      </header>
+
+      <div id="tips-track">
+        {TIPS.map((tip) => (
+          <section class="tip">
+            <div class="tip-emoji" aria-hidden="true">
+              {tip.emoji}
+            </div>
+            <h3>{tip.title}</h3>
+            <p>{tip.body}</p>
+          </section>
+        ))}
+      </div>
+
+      <footer class="tips-nav">
+        <button
+          type="button"
+          id="tips-prev"
+          class="secondary outline"
+          aria-label="前の小話"
+        >
+          ‹
+        </button>
+        <div id="tips-dots" role="tablist" aria-label="小話の位置"></div>
+        <small id="tips-count" aria-live="polite"></small>
+        <button
+          type="button"
+          id="tips-next"
+          class="secondary outline"
+          aria-label="次の小話"
+        >
+          ›
+        </button>
+      </footer>
+
+      <p class="tips-note">
+        <small>処理はこのウィンドウを閉じても続きます。</small>
+      </p>
+    </article>
+  </dialog>
+);
+
 const ProgressSection = () => (
   <section id="progress-section" hidden>
     <article>
-      <header>進捗</header>
+      <header class="progress-header">
+        進捗
+        <button
+          type="button"
+          id="tips-open"
+          class="secondary outline"
+          hidden
+        >
+          小話を見る
+        </button>
+      </header>
       <pre id="progress-log"></pre>
     </article>
   </section>
@@ -200,6 +309,7 @@ export const Page = (props: { userName: string; origin: string }) => (
         <Form />
         <ProgressSection />
         <ResultSection />
+        <TipsDialog />
 
         <footer>
           <small>

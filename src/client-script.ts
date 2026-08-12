@@ -32,10 +32,119 @@ export const CLIENT_SCRIPT = String.raw`
     setLog(lines);
   }
 
+  // --- 待ち時間に出す小話カルーセル ---
+
+  var tipsDialog = document.getElementById("tips-dialog");
+  var tipsTrack = document.getElementById("tips-track");
+  var tipsDots = document.getElementById("tips-dots");
+  var tipsCount = document.getElementById("tips-count");
+  var tipsOpenBtn = document.getElementById("tips-open");
+  var tipCount = tipsTrack.children.length;
+  var tipTimer = null;
+
+  for (var i = 0; i < tipCount; i++) {
+    var dot = document.createElement("span");
+    dot.setAttribute("role", "tab");
+    tipsDots.appendChild(dot);
+  }
+
+  function currentTip() {
+    var w = tipsTrack.clientWidth;
+    return w ? Math.round(tipsTrack.scrollLeft / w) : 0;
+  }
+
+  function goToTip(index, smooth) {
+    // 端まで来たら反対側へ回る。自動送りが止まって見えないように
+    var next = (index + tipCount) % tipCount;
+    tipsTrack.scrollTo({
+      left: next * tipsTrack.clientWidth,
+      behavior: smooth ? "smooth" : "auto",
+    });
+  }
+
+  function syncDots() {
+    var active = currentTip();
+    for (var i = 0; i < tipsDots.children.length; i++) {
+      tipsDots.children[i].setAttribute("aria-selected", i === active ? "true" : "false");
+    }
+    tipsCount.textContent = active + 1 + " / " + tipCount;
+  }
+
+  tipsTrack.addEventListener("scroll", syncDots, { passive: true });
+
+  function startAutoAdvance() {
+    stopAutoAdvance();
+    tipTimer = setInterval(function () {
+      goToTip(currentTip() + 1, true);
+    }, 9000);
+  }
+
+  function stopAutoAdvance() {
+    if (tipTimer) clearInterval(tipTimer);
+    tipTimer = null;
+  }
+
+  // 手で送ったら自動送りをリセットする（読んでいる途中で流れると鬱陶しい）
+  function moveTip(delta) {
+    goToTip(currentTip() + delta, true);
+    startAutoAdvance();
+  }
+
+  function openTips() {
+    if (tipsDialog.open) return;
+
+    // スクロール位置の指定は showModal() の後で行う。
+    // 開く前は clientWidth が 0 なので、移動先が必ず 0 に潰れる
+    tipsDialog.showModal();
+    // Pico は <html class="modal-is-open"> で背面のスクロールを止める
+    document.documentElement.classList.add("modal-is-open");
+
+    // 毎回1枚目からだと、使うたびに同じ話を読まされる。
+    // ループするのでどこから始めても全部読める
+    goToTip(Math.floor(Math.random() * tipCount), false);
+    syncDots();
+    startAutoAdvance();
+  }
+
+  function closeTips() {
+    stopAutoAdvance();
+    if (tipsDialog.open) tipsDialog.close();
+    document.documentElement.classList.remove("modal-is-open");
+  }
+
+  document.getElementById("tips-prev").addEventListener("click", function () {
+    moveTip(-1);
+  });
+  document.getElementById("tips-next").addEventListener("click", function () {
+    moveTip(1);
+  });
+  document.getElementById("tips-close").addEventListener("click", closeTips);
+
+  // Esc で閉じられた場合の後始末。closeTips 経由でも発火するが、
+  // closeTips は open を見てから close() するので再帰しない
+  tipsDialog.addEventListener("close", closeTips);
+
+  tipsDialog.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowLeft") moveTip(-1);
+    if (e.key === "ArrowRight") moveTip(1);
+  });
+
+  tipsOpenBtn.addEventListener("click", openTips);
+
+  /**
+   * 処理中フラグ。小話モーダルの開閉もここに集約する。
+   *
+   * 「処理中」への入口は submit・再接続・スナップショットの3つ、出口は
+   * 完了とエラーの2つあるが、すべてこの関数を通る。個別に書くと閉じ忘れる。
+   */
   function setBusy(busy) {
     submitBtn.disabled = busy;
     submitBtn.setAttribute("aria-busy", busy ? "true" : "false");
     submitBtn.textContent = busy ? "処理中…" : "要約する";
+
+    tipsOpenBtn.hidden = !busy;
+    if (busy) openTips();
+    else closeTips();
   }
 
   var currentMarkdown = "";
