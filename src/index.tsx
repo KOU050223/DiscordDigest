@@ -16,6 +16,9 @@ export { DigestJob } from "./digest-job";
 
 type Vars = { session: Session };
 
+/** OGP の絶対 URL を組み立てるためのオリジン */
+const origin = (url: string) => new URL(url).origin;
+
 const app = new Hono<{ Bindings: Env; Variables: Vars }>();
 
 // --- 認証 ---
@@ -36,7 +39,10 @@ app.use("*", async (c, next) => {
   if (!session) {
     // WebSocket と API はリダイレクトしても意味がないので 401 を返す
     if (path.startsWith("/api/")) return c.json({ error: "ログインが必要です" }, 401);
-    return c.html(<LoginPage />, 401);
+
+    // ログイン画面は 200 で返す。SNS のクローラーは非 2xx を捨てるため、
+    // 401 にすると OGP カードが出せなくなる。
+    return c.html(<LoginPage origin={origin(c.req.url)} />);
   }
 
   c.set("session", session);
@@ -47,7 +53,9 @@ app.get("/auth/login", (c) => startLogin(c.req.raw, c.env));
 
 app.get("/auth/callback", async (c) => {
   const result = await handleCallback(c.req.raw, c.env);
-  if (!result.ok) return c.html(<LoginPage error={result.message} />, 403);
+  if (!result.ok) {
+    return c.html(<LoginPage origin={origin(c.req.url)} error={result.message} />, 403);
+  }
 
   result.headers.set("Location", "/");
   return new Response(null, { status: 302, headers: result.headers });
@@ -62,7 +70,9 @@ app.get("/auth/logout", (c) => {
 
 // --- アプリ本体 ---
 
-app.get("/", (c) => c.html(<Page userName={c.get("session").userName} />));
+app.get("/", (c) =>
+  c.html(<Page userName={c.get("session").userName} origin={origin(c.req.url)} />),
+);
 
 app.get("/api/health", (c) => c.json({ ok: true }));
 

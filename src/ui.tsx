@@ -25,6 +25,7 @@ const EXTRA_CSS = `
   .topbar hgroup { margin-block-end: .5rem; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
+
 `;
 
 const Form = () => (
@@ -104,26 +105,57 @@ const ResultSection = () => (
   </section>
 );
 
+const DESCRIPTION = "Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。";
+
+/**
+ * 共通の <head>。OGP は SNS のクローラー向けなので、
+ * クローラーが実際に見るログイン画面にも必ず出す。
+ *
+ * origin はリクエスト URL から渡す。og:image / og:url は絶対 URL でないと解決されない。
+ */
+const Head = (props: { title: string; origin: string }) => (
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{props.title}</title>
+    <meta name="description" content={DESCRIPTION} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DiscordDigest" />
+    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:title" content={props.title} />
+    <meta property="og:description" content={DESCRIPTION} />
+    <meta property="og:url" content={`${props.origin}/`} />
+    <meta property="og:image" content={`${props.origin}/og.png`} />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="DiscordDigest" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={props.title} />
+    <meta name="twitter:description" content={DESCRIPTION} />
+    <meta name="twitter:image" content={`${props.origin}/og.png`} />
+
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+    />
+    {html`<style>
+      ${raw(EXTRA_CSS)}
+    </style>`}
+  </head>
+);
+
 /** 未ログイン時に出す画面 */
-export const LoginPage = (props: { error?: string }) => (
+export const LoginPage = (props: { origin: string; error?: string }) => (
   <html lang="ja">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>DiscordDigest - ログイン</title>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-      />
-      {html`<style>
-        ${raw(EXTRA_CSS)}
-      </style>`}
-    </head>
+    <Head title="DiscordDigest - ログイン" origin={props.origin} />
     <body>
       <main class="container">
         <hgroup>
           <h1>DiscordDigest</h1>
-          <p>Discord のチャンネルを期間指定で日本語要約します。</p>
+          <p>{DESCRIPTION}</p>
         </hgroup>
 
         {props.error ? (
@@ -150,26 +182,15 @@ export const LoginPage = (props: { error?: string }) => (
   </html>
 );
 
-export const Page = (props: { userName: string }) => (
+export const Page = (props: { userName: string; origin: string }) => (
   <html lang="ja">
-    <head>
-      <meta charset="utf-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
-      <title>DiscordDigest</title>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-      />
-      {html`<style>
-        ${raw(EXTRA_CSS)}
-      </style>`}
-    </head>
+    <Head title="DiscordDigest" origin={props.origin} />
     <body>
       <main class="container">
         <div class="topbar">
           <hgroup>
             <h1>DiscordDigest</h1>
-            <p>Discord のチャンネル / スレッドを、期間を指定して日本語で要約します。</p>
+            <p>{DESCRIPTION}</p>
           </hgroup>
           <small>
             {props.userName} ／ <a href="/auth/logout">ログアウト</a>
