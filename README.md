@@ -122,7 +122,10 @@ Zero Trust → Access → Applications → Self-hosted で、ポリシーを自�
 
 **OGP 画像は Static Assets で配信する。** SVG は Discord / X がカードに描画しないので
 PNG を使う。`public/` に置いたファイルは **Worker より先に処理される**ため、認証ゲートを
-通らず誰でも取得できる。クローラーに読ませたい OGP 画像にはその挙動が都合よく、
+通らず誰でも取得できる。これは `og.png` だけでなく `app.js` / `app.css` /
+`pico.min.css` にも当てはまる（いずれも秘密を含まないので問題ない）。
+なお `app.js.map` はクライアントのソースがそのまま読めるので `deploy` では出力しない
+（`dev` だけ付ける）。クローラーに読ませたい OGP 画像にはその挙動が都合よく、
 Worker 側にルートも認証の例外も要らない。逆に言えば、ここへ置いたものは公開される。
 
 画像は原本 `assets/og-source.png` を 1200x630 へ縮小し256色に減色したもの。
@@ -155,8 +158,10 @@ ping の両方から走らせる。接続時だけだと、画面を開いたま
 ## テスト
 
 ```bash
-npm test        # 純関数のユニットテスト
-npm run check   # 型チェック + テスト
+npm test          # 純関数のユニットテスト
+npm run lint      # Biome（lint + フォーマット確認）
+npm run lint:fix  # 直せるものを直す
+npm run check     # lint + 型チェック（サーバー/クライアント両方）+ テスト
 ```
 
 Discord API と Workers AI のモックは作っていない（個人用ツールとしては過剰なため）。

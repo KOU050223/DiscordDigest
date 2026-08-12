@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:client": "esbuild src/client/index.ts --bundle --format=esm --target=es2022 --minify --sourcemap --outfile=public/app.js",
-    "dev": "npm run build:client && wrangler dev",
-    "deploy": "npm run build:client && wrangler deploy",
+    "build:client": "esbuild src/client/index.ts --bundle --format=esm --target=es2022 --minify --outfile=public/app.js",
+    "build:client:dev": "npm run build:client -- --sourcemap",
+    "dev": "npm run build:client:dev && wrangler dev",
+    "deploy": "rm -f public/app.js.map && npm run build:client && wrangler deploy",
     "typecheck": "tsc && tsc -p tsconfig.client.json",
     "lint": "biome check src",
     "lint:fix": "biome check --write src",
@@ -28,6 +29,8 @@
   "allowScripts": {
     "esbuild@0.21.5": true,
     "workerd@1.20260801.1": true,
-    "esbuild@0.28.1": true
+    "esbuild@0.28.1": true,
+    "esbuild@0.28.2": true,
+    "@biomejs/biome@2.5.8": true
   }
 }
