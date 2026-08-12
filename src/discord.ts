@@ -38,7 +38,7 @@ async function discordGet<T>(env: Env, url: URL, attempt = 0): Promise<T> {
     headers: {
       // シークレットには裸のトークンを保存し、プレフィックスはここだけで付ける
       Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
-      "User-Agent": "DiscordDigest (https://github.com/, 0.1.0)",
+      "User-Agent": "Disgest (https://github.com/, 0.1.0)",
     },
   });
 

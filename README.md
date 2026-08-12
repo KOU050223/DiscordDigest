@@ -1,4 +1,4 @@
-# DiscordDigest
+# Disgest
 
 Discord の任意のチャンネル / スレッドを、期間を指定して日本語で要約する Web ツール。
 Cloudflare Workers + Workers AI + Durable Objects で動く。
