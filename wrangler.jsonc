@@ -6,6 +6,10 @@
 
   "ai": { "binding": "AI" },
 
+  // 秘密情報ではないので secret ではなく設定に置く。
+  // このサーバー（じょぎ / 情報技術研究部）のメンバーだけがログインできる。
+  "vars": { "ALLOWED_GUILD_ID": "1215894283899633664" },
+
   "durable_objects": {
     "bindings": [{ "name": "DIGEST_JOB", "class_name": "DigestJob" }]
   },
