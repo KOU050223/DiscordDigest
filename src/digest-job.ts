@@ -14,6 +14,10 @@ import type {
 /** これを超えて進捗が無いジョブは中断されたとみなす */
 const STALL_TIMEOUT_MS = 15 * 60 * 1000;
 
+const STALLED_MESSAGE =
+  "処理が中断されたようです（一定時間進捗がありません）。" +
+  "期間を短くして再実行してください。";
+
 /**
  * 1回の要約ジョブを表す Durable Object。
  *
@@ -60,9 +64,7 @@ export class DigestJob extends DurableObject<Env> {
     // 一定時間を超えたものは失敗として扱い、無言のスピナーを避ける。
     if (status === "running" && this.isStalled()) {
       status = "error";
-      error =
-        "処理が中断されたようです（一定時間進捗がありません）。" +
-        "期間を短くして再実行してください。";
+      error = STALLED_MESSAGE;
     }
 
     // html を保存していない頃のジョブも整形して表示できるよう、
@@ -102,7 +104,37 @@ export class DigestJob extends DurableObject<Env> {
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
     // クライアントからの ping にだけ応じる。制御コマンドは受け付けない
-    if (message === "ping") ws.send(JSON.stringify({ phase: "pong" }));
+    if (message !== "ping") return;
+
+    // 終わったジョブに ping を打ち続けられると DO が起き続ける。
+    // 古いタブが残っている場合などに起きるので、サーバー側から閉じる
+    const status = this.get("status");
+    if (status === "done" || status === "error") {
+      ws.close(1000, "job finished");
+      return;
+    }
+
+    ws.send(JSON.stringify({ phase: "pong" }));
+
+    // 停止判定を接続時だけに任せると、画面を開いたまま待っている人には
+    // 永遠に届かない。ping は20秒ごとに来るので、ここで再判定して
+    // 中断を検知したら接続中の全員へ通知する。
+    if (this.get("status") === "running" && this.isStalled()) {
+      this.failStalled();
+    }
+  }
+
+  /**
+   * 中断されたジョブを失敗として確定する。
+   *
+   * waitUntil はジョブの再開までは保証せず、DO が退避されると
+   * status が running のまま取り残される。放置すると無言のスピナーが
+   * 回り続けるので、SQLite 上も error に倒してから配信する。
+   */
+  private failStalled(): void {
+    this.put("status", "error");
+    this.put("error", STALLED_MESSAGE);
+    this.emit({ phase: "error", message: STALLED_MESSAGE });
   }
 
   async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
