@@ -1,8 +1,7 @@
 /**
  * 待ち時間に流す技術小話。README の「設計上の要点」と対応している。
  *
- * client-script 側ではなくここに置くのは、CLIENT_SCRIPT が String.raw
- * テンプレートリテラルで、本文に ${ やバッククォートが混ざると壊れるため。
+ * 表示は ui.tsx（サーバー側 JSX）が行う。
  */
 export const TIPS: { emoji: string; title: string; body: string }[] = [
   {

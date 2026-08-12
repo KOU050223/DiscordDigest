@@ -13,5 +13,8 @@
     "jsxImportSource": "hono/jsx",
     "types": ["@cloudflare/workers-types"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  // ブラウザ側は lib が違う（DOM が必要）ので tsconfig.client.json で検査する。
+  // ここで除外しておくことで、Worker 側のコードが document を触ると型で落ちる
+  "exclude": ["src/client"]
 }

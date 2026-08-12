@@ -69,14 +69,23 @@ Zero Trust → Access → Applications → Self-hosted で、ポリシーを自�
 | `src/summarize.ts` | 要約（トークン見積り・チャンク分割・map-reduce） |
 | `src/prompts.ts` | プロンプトとインジェクション防御 |
 | `src/channel-url.ts` | URL/ID パースと snowflake 変換（純関数） |
-| `src/ui.tsx` | Hono JSX による UI |
-| `src/client-script.ts` | インライン埋め込みするクライアント JS |
+| `src/ui.tsx` | Hono JSX によるサーバーレンダリング（HTML の骨格） |
+| `src/protocol.ts` | サーバーとブラウザで共有する型（`ProgressEvent` など） |
+| `src/client/` | ブラウザで動くコード。esbuild で `public/app.js` にする |
 | `src/data.ts` | 待ち時間に出す技術小話 |
+| `public/app.css` | Pico に足すスタイル |
+| `public/pico.min.css` | Pico 本体（CDN を使わず同梱する） |
 | `public/og.png` | OGP 画像（そのまま配信される成果物） |
 | `assets/og-source.png` | OGP 画像の原本（再生成できないので保管） |
 | `scripts/gen-og.py` | 原本から `public/og.png` を作り直す手動ツール |
 
-ビルド工程は `wrangler` だけ。Vite もバンドラも使っていない。
+ビルドはクライアント側の esbuild（`npm run build:client`）と `wrangler` の2つ。
+`dev` と `deploy` はどちらも先にクライアントをバンドルするので、手で叩く必要はない。
+`public/app.js` は生成物なのでコミットしない。
+
+型検査はサーバーとクライアントで分けている。ルートの `tsconfig.json` は Workers 向けで
+`lib` に DOM を含まない（Worker 側で `document` を触るミスを型で弾くため）。
+ブラウザ側は `tsconfig.client.json` が DOM を足して検査する。`npm run typecheck` は両方を回す。
 
 ## 設計上の要点
 
@@ -105,8 +114,7 @@ Zero Trust → Access → Applications → Self-hosted で、ポリシーを自�
 「処理中」への入口は submit・再接続・スナップショットの3経路あり、個別に書くと
 閉じ忘れるため。開始位置はランダム（毎回同じ話を読ませない）。ただし位置の指定は
 `showModal()` の後で行う。開く前は `clientWidth` が 0 で移動先が 0 に潰れる。
-文面は `data.ts` の `TIPS` にあり、`client-script.ts` には置かない
-（`String.raw` 内では `${` が壊れるため）。
+文面は `data.ts` の `TIPS` にあり、`ui.tsx` がサーバー側で描画する。
 
 **OGP はログイン画面に持たせ、未認証の `/` は 200 で返す。** SNS のクローラーは
 ログインできないので、認証後の画面しか見られない。加えて Discord などの unfurler は

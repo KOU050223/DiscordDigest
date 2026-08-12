@@ -4,17 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "typecheck": "tsc",
+    "build:client": "esbuild src/client/index.ts --bundle --format=esm --target=es2022 --minify --sourcemap --outfile=public/app.js",
+    "dev": "npm run build:client && wrangler dev",
+    "deploy": "npm run build:client && wrangler deploy",
+    "typecheck": "tsc && tsc -p tsconfig.client.json",
     "test": "vitest run",
-    "check": "tsc && vitest run"
+    "check": "npm run typecheck && vitest run"
   },
   "dependencies": {
     "hono": "^4.6.14"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260810.1",
+    "@picocss/pico": "^2.1.1",
+    "esbuild": "^0.28.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
     "wrangler": "^4.120.0"

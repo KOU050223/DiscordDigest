@@ -97,7 +97,7 @@ export class DigestJob extends DurableObject<Env> {
     const [client, server] = Object.values(new WebSocketPair());
     // accept() ではなく acceptWebSocket() を使うことで DO が休眠できる
     this.ctx.acceptWebSocket(server);
-    server.send(JSON.stringify({ phase: "snapshot", ...this.snapshot() }));
+    this.send(server, { phase: "snapshot", ...this.snapshot() });
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -114,7 +114,7 @@ export class DigestJob extends DurableObject<Env> {
       return;
     }
 
-    ws.send(JSON.stringify({ phase: "pong" }));
+    this.send(ws, { phase: "pong" });
 
     // 停止判定を接続時だけに任せると、画面を開いたまま待っている人には
     // 永遠に届かない。ping は20秒ごとに来るので、ここで再判定して
@@ -233,13 +233,22 @@ export class DigestJob extends DurableObject<Env> {
     }
     if (ev.phase === "error") this.appendProgress(`エラー: ${ev.message}`);
 
-    const payload = JSON.stringify(ev);
     for (const ws of this.ctx.getWebSockets()) {
-      try {
-        ws.send(payload);
-      } catch {
-        // 切断済みのソケットは無視する（ジョブは継続する）
-      }
+      this.send(ws, ev);
+    }
+  }
+
+  /**
+   * 1つのソケットへイベントを送る。
+   *
+   * 送信を必ずここに通すことで、ProgressEvent 以外の形が
+   * ワイヤーに乗らないことを型で保証する。
+   */
+  private send(ws: WebSocket, ev: ProgressEvent): void {
+    try {
+      ws.send(JSON.stringify(ev));
+    } catch {
+      // 切断済みのソケットは無視する（ジョブは継続する）
     }
   }
 

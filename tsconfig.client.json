@@ -1,0 +1,17 @@
+{
+  // ブラウザで動くコード用。src/client/ だけを見る。
+  //
+  // ルートの tsconfig は Workers 向けで lib に DOM を含まないため
+  // （Worker 側で document を触るミスを型で防ぐのが狙い）、
+  // クライアント側はここで DOM を足して別に検査する。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    // Workers の型（Ai や DurableObjectNamespace）はブラウザには無い。
+    // WebSocket などの名前がぶつかるので types を空にして DOM 側を使う
+    "types": []
+  },
+  // ルートの exclude（src/client）を打ち消す。ここでは逆にそこだけを見る
+  "exclude": [],
+  "include": ["src/client/**/*.ts", "src/protocol.ts"]
+}

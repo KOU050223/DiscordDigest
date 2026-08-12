@@ -1,87 +1,4 @@
-import { html, raw } from "hono/html";
-import { CLIENT_SCRIPT } from "./client-script";
 import { TIPS } from "./data";
-
-const EXTRA_CSS = `
-  :root { --pico-form-element-spacing-vertical: 0.6rem; }
-  body { padding-block: 2rem; }
-  .quick-range { display: flex; gap: .5rem; margin-block: .25rem 1rem; }
-  .quick-range button { width: auto; padding: .25rem .75rem; font-size: .8rem; margin: 0; }
-  #progress-log {
-    font-family: var(--pico-font-family-monospace);
-    font-size: .8rem; white-space: pre-wrap; word-break: break-all;
-    max-height: 14rem; overflow-y: auto; margin: 0;
-  }
-  #result-body { word-break: break-word; font-size: .95rem; }
-  #result-body h2 { font-size: 1.15rem; margin-block: 1.4rem .5rem; }
-  #result-body h2:first-child { margin-block-start: 0; }
-  #result-body h3 { font-size: 1rem; margin-block: 1rem .4rem; }
-  #result-body ul, #result-body ol { margin-block: .4rem .8rem; padding-inline-start: 1.4rem; }
-  #result-body li { margin-block: .2rem; }
-  #result-body p { margin-block: .5rem; }
-  #result-body pre { padding: .6rem; font-size: .8rem; overflow-x: auto; }
-  #result-body blockquote { margin-block: .5rem; }
-  #result-meta { font-size: .8rem; color: var(--pico-muted-color); }
-  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
-  .topbar hgroup { margin-block-end: .5rem; }
-  /* 見出しの見た目は保ったままリンクにする */
-  .home-link { color: inherit; text-decoration: none; }
-  .home-link:hover { text-decoration: underline; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
-
-  /* 入力パネル。畳んだときだけサマリーを見せる（開いていると見出しが二重になる） */
-  #input-panel > summary { cursor: pointer; font-weight: bold; }
-  #input-panel[open] > summary { display: none; }
-  #input-panel:not([open]) { margin-block-end: 1rem; }
-
-  .progress-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-  .progress-header button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .75rem; }
-
-  .result-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-  .result-actions { display: flex; gap: .5rem; }
-  .result-actions button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .8rem; white-space: nowrap; }
-
-  /* --- 小話モーダル --- */
-  #tips-dialog article { max-width: 34rem; padding-block-end: 1rem; }
-  .tips-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-  .tips-header button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .75rem; }
-
-  /* 横スクロール + スナップ。スワイプ操作は JS を書かずブラウザに任せる */
-  #tips-track {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    margin-inline: calc(var(--pico-block-spacing-horizontal) * -1);
-  }
-  #tips-track::-webkit-scrollbar { display: none; }
-  .tip {
-    flex: 0 0 100%;
-    scroll-snap-align: center;
-    padding-inline: var(--pico-block-spacing-horizontal);
-    min-height: 13rem;
-  }
-  .tip-emoji { font-size: 2.4rem; line-height: 1; margin-block-end: .6rem; }
-  .tip h3 { font-size: 1.05rem; margin-block: 0 .5rem; }
-  .tip p { font-size: .9rem; margin: 0; color: var(--pico-muted-color); }
-
-  .tips-nav { display: flex; align-items: center; gap: 1rem; padding-block: .6rem; }
-  .tips-nav button { width: auto; margin: 0; padding: .1rem .8rem; font-size: 1rem; }
-  #tips-dots { display: flex; gap: .4rem; flex: 1; justify-content: center; flex-wrap: wrap; }
-  #tips-dots span {
-    width: .5rem; height: .5rem; border-radius: 50%;
-    background: var(--pico-muted-border-color); transition: background .2s;
-  }
-  #tips-dots span[aria-selected="true"] { background: var(--pico-primary); }
-  #tips-count { color: var(--pico-muted-color); font-size: .75rem; min-width: 3.2rem; text-align: right; }
-  /* 枚数が多いと点が潰れるので、狭い画面では数字表示だけにする */
-  @media (max-width: 480px) { #tips-dots { display: none; } #tips-count { flex: 1; text-align: center; } }
-  .tips-note { text-align: center; margin: 0; color: var(--pico-muted-color); }
-
-  /* 端末が「動きを減らす」設定なら自動送りのスムーススクロールも止める */
-  @media (prefers-reduced-motion: reduce) { #tips-track { scroll-behavior: auto; } }
-`;
 
 const Form = () => (
   <form id="digest-form">
@@ -258,13 +175,9 @@ const Head = (props: { title: string; origin: string }) => (
     <meta name="twitter:description" content={DESCRIPTION} />
     <meta name="twitter:image" content={`${props.origin}/og.png`} />
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
-    />
-    {html`<style>
-      ${raw(EXTRA_CSS)}
-    </style>`}
+    {/* どちらも public/ 配下。CDN を挟まないので実行時の外部依存が無い */}
+    <link rel="stylesheet" href="/pico.min.css" />
+    <link rel="stylesheet" href="/app.css" />
   </head>
 );
 
@@ -323,7 +236,7 @@ export const Page = (props: { userName: string; origin: string }) => (
         </div>
 
         {/*
-          既に要約済みの URL（#job=…）を開いたときは、client-script が
+          既に要約済みの URL（#job=…）を開いたときは、クライアント側が
           open を外して畳む。details なので開閉自体に JS は要らない
         */}
         <details id="input-panel" open>
@@ -342,9 +255,8 @@ export const Page = (props: { userName: string; origin: string }) => (
           </small>
         </footer>
       </main>
-      {html`<script>
-        ${raw(CLIENT_SCRIPT)}
-      </script>`}
+      {/* src/client/ を esbuild でバンドルしたもの（npm run build:client） */}
+      <script src="/app.js" defer></script>
     </body>
   </html>
 );
