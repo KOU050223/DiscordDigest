@@ -29,8 +29,8 @@ function localDate(d: Date): string {
 function setRange(days: number): void {
   const to = new Date();
   const from = new Date(to.getTime() - days * 86400000);
-  els.form.querySelector<HTMLInputElement>('[name="from"]')!.value = localDate(from);
-  els.form.querySelector<HTMLInputElement>('[name="to"]')!.value = localDate(to);
+  els.fromInput.value = localDate(from);
+  els.toInput.value = localDate(to);
 }
 
 function initForm(): void {

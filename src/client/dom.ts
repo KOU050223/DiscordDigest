@@ -11,9 +11,18 @@ function must<T extends HTMLElement>(id: string): T {
   return el as T;
 }
 
+/** name 属性で引く入力欄。id を持たないフォーム部品用 */
+function mustInput(name: string): HTMLInputElement {
+  const el = document.querySelector<HTMLInputElement>(`[name="${name}"]`);
+  if (!el) throw new Error(`入力欄が見つかりません: [name="${name}"]`);
+  return el;
+}
+
 /** ui.tsx のマークアップと1対1で対応する参照。id の綴りはここだけに書く */
 export const els = {
   form: must<HTMLFormElement>("digest-form"),
+  fromInput: mustInput("from"),
+  toInput: mustInput("to"),
   submitBtn: must<HTMLButtonElement>("submit-btn"),
   inputPanel: must<HTMLDetailsElement>("input-panel"),
   inputSummary: must("input-summary"),

@@ -13,5 +13,5 @@
   },
   // ルートの exclude（src/client）を打ち消す。ここでは逆にそこだけを見る
   "exclude": [],
-  "include": ["src/client/**/*.ts", "src/protocol.ts"]
+  "include": ["src/client/**/*.ts", "src/client/**/*.tsx", "src/protocol.ts"]
 }
