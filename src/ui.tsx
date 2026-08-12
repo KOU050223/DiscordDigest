@@ -24,11 +24,23 @@ const EXTRA_CSS = `
   #result-meta { font-size: .8rem; color: var(--pico-muted-color); }
   .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
   .topbar hgroup { margin-block-end: .5rem; }
+  /* 見出しの見た目は保ったままリンクにする */
+  .home-link { color: inherit; text-decoration: none; }
+  .home-link:hover { text-decoration: underline; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
   @media (max-width: 480px) { .row { grid-template-columns: 1fr; } }
 
+  /* 入力パネル。畳んだときだけサマリーを見せる（開いていると見出しが二重になる） */
+  #input-panel > summary { cursor: pointer; font-weight: bold; }
+  #input-panel[open] > summary { display: none; }
+  #input-panel:not([open]) { margin-block-end: 1rem; }
+
   .progress-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
   .progress-header button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .75rem; }
+
+  .result-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .result-actions { display: flex; gap: .5rem; }
+  .result-actions button { width: auto; margin: 0; padding: .2rem .6rem; font-size: .8rem; white-space: nowrap; }
 
   /* --- 小話モーダル --- */
   #tips-dialog article { max-width: 34rem; padding-block-end: 1rem; }
@@ -197,16 +209,16 @@ const ProgressSection = () => (
 const ResultSection = () => (
   <section id="result-section" hidden>
     <article>
-      <header>
+      <header class="result-header">
         <strong>要約</strong>
-        <button
-          type="button"
-          id="copy-btn"
-          class="secondary outline"
-          style="width:auto;float:right;padding:.2rem .6rem;font-size:.8rem;margin:0"
-        >
-          コピー
-        </button>
+        <div class="result-actions">
+          <button type="button" id="share-btn">
+            共有する
+          </button>
+          <button type="button" id="copy-btn" class="secondary outline">
+            コピー
+          </button>
+        </div>
       </header>
       <div id="result-body"></div>
       <footer id="result-meta"></footer>
@@ -230,7 +242,7 @@ const Head = (props: { title: string; origin: string }) => (
     <meta name="description" content={DESCRIPTION} />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="DiscordDigest" />
+    <meta property="og:site_name" content="Disgest" />
     <meta property="og:locale" content="ja_JP" />
     <meta property="og:title" content={props.title} />
     <meta property="og:description" content={DESCRIPTION} />
@@ -239,7 +251,7 @@ const Head = (props: { title: string; origin: string }) => (
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="DiscordDigest" />
+    <meta property="og:image:alt" content="Disgest" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={props.title} />
@@ -259,11 +271,11 @@ const Head = (props: { title: string; origin: string }) => (
 /** 未ログイン時に出す画面 */
 export const LoginPage = (props: { origin: string; error?: string }) => (
   <html lang="ja">
-    <Head title="DiscordDigest - ログイン" origin={props.origin} />
+    <Head title="Disgest - ログイン" origin={props.origin} />
     <body>
       <main class="container">
         <hgroup>
-          <h1>DiscordDigest</h1>
+          <h1>Disgest</h1>
           <p>{DESCRIPTION}</p>
         </hgroup>
 
@@ -293,12 +305,16 @@ export const LoginPage = (props: { origin: string; error?: string }) => (
 
 export const Page = (props: { userName: string; origin: string }) => (
   <html lang="ja">
-    <Head title="DiscordDigest" origin={props.origin} />
+    <Head title="Disgest" origin={props.origin} />
     <body>
       <main class="container">
         <div class="topbar">
           <hgroup>
-            <h1>DiscordDigest</h1>
+            <h1>
+              <a href="/" class="home-link">
+                Disgest
+              </a>
+            </h1>
             <p>{DESCRIPTION}</p>
           </hgroup>
           <small>
@@ -306,8 +322,16 @@ export const Page = (props: { userName: string; origin: string }) => (
           </small>
         </div>
 
-        <Form />
-        <ProgressSection />
+        {/*
+          既に要約済みの URL（#job=…）を開いたときは、client-script が
+          open を外して畳む。details なので開閉自体に JS は要らない
+        */}
+        <details id="input-panel" open>
+          <summary id="input-summary">条件を入力して要約する</summary>
+          <Form />
+          <ProgressSection />
+        </details>
+
         <ResultSection />
         <TipsDialog />
 

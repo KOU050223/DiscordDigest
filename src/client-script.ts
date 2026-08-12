@@ -12,6 +12,7 @@ export const CLIENT_SCRIPT = String.raw`
   var resultMeta = document.getElementById("result-meta");
   var submitBtn = document.getElementById("submit-btn");
   var copyBtn = document.getElementById("copy-btn");
+  var shareBtn = document.getElementById("share-btn");
   var socket = null;
 
   function setLog(lines) {
@@ -147,6 +148,22 @@ export const CLIENT_SCRIPT = String.raw`
     else closeTips();
   }
 
+  var inputPanel = document.getElementById("input-panel");
+
+  /**
+   * 入力フォームと進捗を畳む / 開く。
+   *
+   * 「もう結果が出ている URL」を開いたときだけ畳む。実行中に再読み込み
+   * された場合は進捗ログが主役なので開いたままにする。
+   */
+  function setInputCollapsed(collapsed) {
+    if (collapsed) inputPanel.removeAttribute("open");
+    else inputPanel.setAttribute("open", "");
+    document.getElementById("input-summary").textContent = collapsed
+      ? "別の条件で要約する（入力と進捗を表示）"
+      : "条件を入力して要約する";
+  }
+
   var currentMarkdown = "";
 
   function showResult(markdown, stats, htmlBody) {
@@ -263,6 +280,8 @@ export const CLIENT_SCRIPT = String.raw`
         if (ev.status === "done" && ev.markdown) {
           finish();
           showResult(ev.markdown, ev.stats, ev.html);
+          // 解析済みの URL を開き直した場合。入力も進捗も用は無いので畳む
+          setInputCollapsed(true);
         } else if (ev.status === "error") {
           finish();
           showError(ev.error || "不明なエラー");
@@ -306,6 +325,7 @@ export const CLIENT_SCRIPT = String.raw`
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     setBusy(true);
+    setInputCollapsed(false); // 畳んだ状態から再実行された場合、進捗を隠さない
     section.hidden = false;
     resultSection.hidden = true;
     setLog(["ジョブを開始しています…"]);
@@ -365,12 +385,126 @@ export const CLIENT_SCRIPT = String.raw`
   copyBtn.addEventListener("click", function () {
     // 表示はHTMLだが、コピーは元のMarkdownを渡す
     navigator.clipboard.writeText(currentMarkdown).then(function () {
-      copyBtn.textContent = "コピーしました";
-      setTimeout(function () {
-        copyBtn.textContent = "コピー";
-      }, 1500);
+      flashLabel(copyBtn, "コピーしました", "コピー");
     });
   });
+
+  // --- 共有 ---
+
+  /** ボタンの文言を一時的に差し替えて、操作できたことを伝える */
+  function flashLabel(btn, temp, original) {
+    btn.textContent = temp;
+    setTimeout(function () {
+      btn.textContent = original;
+    }, 1500);
+  }
+
+  /**
+   * 行頭の箇条書き記号を落とす。
+   * 連結してからでは行頭でなくなるので、必ず1行ずつ通す。
+   */
+  function stripBullet(line) {
+    return line.trim().replace(/^(?:[-*+]|\d+\.)\s+/, "");
+  }
+
+  /** SNS に貼る前提で、Markdown の装飾を落として素の文章にする */
+  function stripMarkdown(text) {
+    return text
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/[*_~\x60]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  /**
+   * 共有文に載せる「概要」を取り出す。
+   *
+   * ## 概要 はプロンプトの目安でしかなく、まとめ方の希望次第では
+   * 出てこない。その場合は本文の最初の段落で代用する。
+   */
+  function extractOverview(markdown) {
+    var lines = markdown.split("\n");
+    var picked = [];
+    var inOverview = false;
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (/^#{1,6}\s/.test(line)) {
+        if (inOverview) break; // 次の見出しまでが概要
+        inOverview = /^##\s*概要\s*$/.test(line);
+        continue;
+      }
+      if (inOverview && line.trim()) picked.push(stripBullet(line));
+    }
+
+    if (picked.length === 0) {
+      // 概要が無いときは、見出し以外で最初に現れるまとまりを使う
+      for (var j = 0; j < lines.length; j++) {
+        var l = lines[j];
+        if (/^#{1,6}\s/.test(l) || !l.trim()) {
+          if (picked.length > 0) break;
+          continue;
+        }
+        picked.push(stripBullet(l));
+      }
+    }
+
+    var text = stripMarkdown(picked.join(" "));
+
+    // 絵文字の途中で切ると文字化けするので、コードポイント単位で数える
+    var chars = Array.from(text);
+    return chars.length > 300 ? chars.slice(0, 300).join("") + "…" : text;
+  }
+
+  /** 例に合わせた共有テキスト。URL は #job= を含む今開いている URL をそのまま使う */
+  function buildShareText() {
+    var overview = extractOverview(currentMarkdown);
+    var lines = [
+      "Disgest を使って、Discord の要約やってみました！🪄",
+      location.href,
+    ];
+    if (overview) {
+      lines.push("");
+      lines.push("【概要】");
+      lines.push(overview);
+    }
+    return lines.join("\n");
+  }
+
+  shareBtn.addEventListener("click", async function () {
+    var text = buildShareText();
+
+    // 共有シートがあれば任せる。無い環境ではクリップボードに落とす
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Disgest の要約", text: text });
+        return;
+      } catch (err) {
+        // ユーザーが閉じただけの場合は何もしない
+        if (err && err.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      flashLabel(shareBtn, "共有文をコピーしました", "共有する");
+    } catch (err) {
+      flashLabel(shareBtn, "コピーできませんでした", "共有する");
+    }
+  });
+
+  // 左上のロゴから最初の状態に戻す。
+  // #job=… が残ったままだと同じジョブに再接続してしまい、
+  // 結果の表示も開いた WebSocket もそのままになる。確実に読み直す
+  var homeLink = document.querySelector(".home-link");
+  if (homeLink) {
+    homeLink.addEventListener("click", function (e) {
+      if (!location.hash) return; // ハッシュが無ければ通常の遷移で足りる
+      e.preventDefault();
+      history.replaceState(null, "", "/");
+      location.reload();
+    });
+  }
 
   // 既存ジョブへの再接続（タブを閉じても DO 側で処理は続いている）
   var m = location.hash.match(/job=([0-9a-f-]+)/);
